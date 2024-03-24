@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 #define MAX_RTABLE_SIZE 80000
 #define MAX_ARP_SIZE 1000
@@ -68,6 +68,8 @@ struct route_table_entry *get_best_route(uint32_t dest_ip, struct route_table_en
 
 int main(int argc, char *argv[])
 {
+	//setvbuf(stdout, NULL, _IONBF, 0);
+	
 	char buf[MAX_PACKET_LEN];
 
 	// Do not modify this line
@@ -77,7 +79,7 @@ int main(int argc, char *argv[])
 	struct route_table_entry* route_table = malloc(MAX_RTABLE_SIZE * sizeof(struct route_table_entry));
 	int rtable_size = read_rtable(argv[1], route_table);
 
-	// revert the table to host order
+	// conversie din network order in host order
 	for (int i = 0; i < rtable_size; i++) {
 		route_table[i].prefix = ntohl(route_table[i].prefix);
 		route_table[i].next_hop = ntohl(route_table[i].next_hop);
@@ -100,6 +102,9 @@ int main(int argc, char *argv[])
 		debug_printf("=============================================\n");
 		debug_printf("Received packet on interface %d\n", interface);
 
+		uint32_t my_ip;
+		inet_pton(AF_INET, get_interface_ip(interface), &my_ip);
+
 		DIE(interface < 0, "recv_from_any_links");
 
 		struct ether_header *eth_hdr = (struct ether_header *) buf;
@@ -110,10 +115,9 @@ int main(int argc, char *argv[])
 
 		// daca e IPv4
 		if (ntohs(eth_hdr->ether_type) == ETHERTYPE_IPV4) {
-			struct iphdr *ip_hdr = (struct iphdr *)(buf + sizeof(struct ether_header));
+			debug_printf("Received IPv4 packet\n");
 
-			uint32_t my_ip;
-			inet_pton(AF_INET, get_interface_ip(interface), &my_ip);
+			struct iphdr *ip_hdr = (struct iphdr *)(buf + sizeof(struct ether_header));
 
 			char* dest_ip_str = malloc(16);
 			inet_ntop(AF_INET, &ip_hdr->daddr, dest_ip_str, 16);
@@ -178,6 +182,8 @@ int main(int argc, char *argv[])
 
 			// trimit pachetul
 			send_to_link(best_route->interface, buf, len);
+
+			debug_printf("Sent packet on interface %d\n", best_route->interface);
 		}
 
 		// TODO: SA REPAR GUNOIUL ASTA
@@ -186,15 +192,15 @@ int main(int argc, char *argv[])
 
 			// daca e request
 			if (ntohs(arp_hdr->op) == ARP_REQUEST) {
+				debug_printf("Received ARP request\n");
 				// daca e pentru mine
-				if (arp_hdr->tpa == inet_addr(get_interface_ip(interface))) {
+				if (arp_hdr->tpa == my_ip) {
 					// trimit reply
-					struct ether_header *eth_hdr_reply = (struct ether_header *) buf;
 					struct arp_header *arp_hdr_reply = (struct arp_header *)(buf + sizeof(struct ether_header));
 
 					// schimb mac-urile
-					memcpy(eth_hdr_reply->ether_dhost, eth_hdr->ether_shost, 6);
-					get_interface_mac(interface, eth_hdr_reply->ether_shost);
+					memcpy(eth_hdr->ether_dhost, eth_hdr->ether_shost, 6);
+					get_interface_mac(interface, eth_hdr->ether_shost);
 
 					// schimb opcode-ul
 					arp_hdr_reply->op = htons(ARP_REPLY);
@@ -214,8 +220,9 @@ int main(int argc, char *argv[])
 
 			// daca e reply
 			if (ntohs(arp_hdr->op) == ARP_REPLY) {
+				debug_printf("Received ARP reply\n");
 				// adaug in tabela ARP
-				add_arp_entry(arp_hdr->spa, arp_hdr->sha);
+				//add_arp_entry(arp_hdr->spa, arp_hdr->sha);
 			}
 		}
 	}

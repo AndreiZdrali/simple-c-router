@@ -31,3 +31,8 @@ run_router0: all
 
 run_router1: all
 	./router rtable1.txt rr-0-1 r-0 r-1
+
+# teste de la mn
+test:
+	test.c lib/queue.c lib/list.c lib/lib.c
+	$(CC) $(LIBFLAGS) $(CFLAGS) -fPIC $< -o $@

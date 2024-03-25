@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#define DEBUG 0
+#define DEBUG 1
 
 #define MAX_RTABLE_SIZE 80000
 #define MAX_ARP_SIZE 1000
@@ -56,8 +56,8 @@ struct route_table_entry *get_best_route(uint32_t dest_ip, struct route_table_en
 
 	for (int i = 0; i < rtable_size; i++) {
 		if ((dest_ip & rtable[i].mask) == rtable[i].prefix) {
-			if (rtable[i].mask > max_mask) {
-				max_mask = rtable[i].mask;
+			if (ntohl(rtable[i].mask) > max_mask) {
+				max_mask = ntohl(rtable[i].mask);
 				best_route = &rtable[i];
 			}
 		}
@@ -80,11 +80,11 @@ int main(int argc, char *argv[])
 	int rtable_size = read_rtable(argv[1], route_table);
 
 	// conversie din network order in host order
-	for (int i = 0; i < rtable_size; i++) {
-		route_table[i].prefix = ntohl(route_table[i].prefix);
-		route_table[i].next_hop = ntohl(route_table[i].next_hop);
-		route_table[i].mask = ntohl(route_table[i].mask);
-	}
+	// for (int i = 0; i < rtable_size; i++) {
+	// 	route_table[i].prefix = ntohl(route_table[i].prefix);
+	// 	route_table[i].next_hop = ntohl(route_table[i].next_hop);
+	// 	route_table[i].mask = ntohl(route_table[i].mask);
+	// }
 
 	// citim tabela statica ARP
 	struct arp_table_entry* arp_table = malloc(MAX_ARP_SIZE * sizeof(struct arp_table_entry));
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 			ip_hdr->ttl--;
 
 			// caut in tabela de rutare
-			struct route_table_entry *best_route = get_best_route(ntohl(ip_hdr->daddr), route_table, rtable_size);
+			struct route_table_entry *best_route = get_best_route(ip_hdr->daddr, route_table, rtable_size);
 
 			// daca nu gasesc ruta
 			if (best_route == NULL) {
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 
 			// mac-ul destinatie devine mac-ul next_hop-ului
 			for (int i = 0; i < arp_table_len; i++) {
-				if (arp_table[i].ip == next_hop_hw) {
+				if (arp_table[i].ip == best_route->next_hop) {
 					memcpy(eth_hdr->ether_dhost, arp_table[i].mac, 6);
 					break;
 				}

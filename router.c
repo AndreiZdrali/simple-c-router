@@ -49,7 +49,7 @@ void print_ip(uint32_t ip)
 }
 
 //TODO: sa fac un trie pentru tabela de rutare - https://github.com/dzolo/lpm/blob/master/trie.c
-struct route_table_entry *get_best_route(uint32_t dest_ip, struct route_table_entry *rtable, int rtable_size)
+struct route_table_entry *get_best_route_ASTA_NU_E_BUN_CRED(uint32_t dest_ip, struct route_table_entry *rtable, int rtable_size)
 {
 	struct route_table_entry *best_route = NULL;
 	int max_mask = 0;
@@ -58,6 +58,23 @@ struct route_table_entry *get_best_route(uint32_t dest_ip, struct route_table_en
 		if ((dest_ip & rtable[i].mask) == rtable[i].prefix) {
 			if (ntohl(rtable[i].mask) > max_mask) {
 				max_mask = ntohl(rtable[i].mask);
+				best_route = &rtable[i];
+			}
+		}
+	}
+
+	return best_route;
+}
+
+struct route_table_entry *get_best_route(uint32_t dest_ip, struct route_table_entry *rtable, int rtable_size)
+{
+	struct route_table_entry *best_route = NULL;
+	int max_mask = 0;
+
+	for (int i = 0; i < rtable_size; i++) {
+		if ((dest_ip & rtable[i].mask) == rtable[i].prefix) {
+			if (rtable[i].mask > max_mask) {
+				max_mask = rtable[i].mask;
 				best_route = &rtable[i];
 			}
 		}
@@ -89,11 +106,11 @@ int main(int argc, char *argv[])
 	int rtable_size = read_rtable(argv[1], route_table);
 
 	// conversie din network order in host order
-	// for (int i = 0; i < rtable_size; i++) {
-	// 	route_table[i].prefix = ntohl(route_table[i].prefix);
-	// 	route_table[i].next_hop = ntohl(route_table[i].next_hop);
-	// 	route_table[i].mask = ntohl(route_table[i].mask);
-	// }
+	for (int i = 0; i < rtable_size; i++) {
+		route_table[i].prefix = ntohl(route_table[i].prefix);
+		route_table[i].next_hop = ntohl(route_table[i].next_hop);
+		route_table[i].mask = ntohl(route_table[i].mask);
+	}
 
 	// citim tabela statica ARP
 	struct arp_table_entry* arp_table = malloc(MAX_ARP_SIZE * sizeof(struct arp_table_entry));
@@ -142,7 +159,7 @@ int main(int argc, char *argv[])
 			uint16_t check = ntohs(ip_hdr->check);
 			ip_hdr->check = 0;
 			if (check != checksum((uint16_t *)ip_hdr, ip_hdr->ihl * 4)) {
-				debug_printf("Failed checksum \n");
+				debug_printf("Failed checksum\n");
 				continue;
 			}
 
@@ -152,12 +169,10 @@ int main(int argc, char *argv[])
 				debug_printf("TTL exceeded\n");
 				continue;
 			}
-
-			// decrementez ttl
 			ip_hdr->ttl--;
 
 			// caut in tabela de rutare
-			struct route_table_entry *best_route = get_best_route(ip_hdr->daddr, route_table, rtable_size);
+			struct route_table_entry *best_route = get_best_route(ntohl(ip_hdr->daddr), route_table, rtable_size);
 
 			// daca nu gasesc ruta
 			if (best_route == NULL) {
@@ -166,9 +181,8 @@ int main(int argc, char *argv[])
 				continue;
 			}
 
-			// ii dam reverse in network order pt ca tabela e in host order
-			int next_hop_hw = htonl(best_route->next_hop);
-			debug_printf("Next hop: "); print_ip(next_hop_hw);
+			int next_hop_network = htonl(best_route->next_hop);
+			debug_printf("Next hop: "); print_ip(next_hop_network);
 
 			// actualizez checksum
 			ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, ip_hdr->ihl * 4));
@@ -178,8 +192,8 @@ int main(int argc, char *argv[])
 			debug_printf("Source MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", eth_hdr->ether_shost[0], eth_hdr->ether_shost[1], eth_hdr->ether_shost[2], eth_hdr->ether_shost[3], eth_hdr->ether_shost[4], eth_hdr->ether_shost[5]);
 
 			// se cauta in tabela ARP
-			struct arp_table_entry *arp_entry = get_arp_entry(next_hop_hw, arp_table, arp_table_len);
-			
+			struct arp_table_entry *arp_entry = get_arp_entry(next_hop_network, arp_table, arp_table_len);
+
 			// TODO: sa testez asta si sa o fac mai frumoasa
 			//daca nu exista se pune in coada pachetul si se trimite ARP_REQUEST
 			if (arp_entry == NULL) {
@@ -187,7 +201,6 @@ int main(int argc, char *argv[])
 				memcpy(aux, buf, len);
 				queue_enq(arp_queue, aux);
 
-				struct ether_header *eth_hdr = (struct ether_header *) buf;
 				struct arp_header *arp_hdr = (struct arp_header *)(buf + sizeof(struct ether_header));
 
 				// mac-ul sursa
@@ -223,7 +236,7 @@ int main(int argc, char *argv[])
 				memset(arp_hdr->tha, 0, 6);
 
 				// ip-ul destinatie
-				arp_hdr->tpa = next_hop_hw;
+				arp_hdr->tpa = best_route->next_hop;
 
 				// trimit pachetul
 				send_to_link(interface, buf, len);
@@ -231,6 +244,8 @@ int main(int argc, char *argv[])
 				debug_printf("Destination MAC unknown, sent ARP request\n");
 				continue;
 			}
+
+			memcpy(eth_hdr->ether_dhost, arp_entry->mac, 6);
 
 			debug_printf("Destination MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", eth_hdr->ether_dhost[0], eth_hdr->ether_dhost[1], eth_hdr->ether_dhost[2], eth_hdr->ether_dhost[3], eth_hdr->ether_dhost[4], eth_hdr->ether_dhost[5]);
 

@@ -29,7 +29,7 @@
 
 -- Packet
 ###[ Ethernet ]### 
-  dst       = de:fe:c8:ed:00:00
+  dst       = de:ad:be:ef:00:00
   src       = de:fe:c8:ed:00:00
   type      = IPv4
 ###[ IP ]### 

@@ -1,0 +1,303 @@
+Setting up interface: rr-0-1
+Setting up interface: r-0
+Setting up interface: r-1
+Interface 0: 192.0.1.2
+Interface 1: 192.168.2.1
+Interface 2: 192.168.3.1
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 63 -> 62
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 2
+Received ARP packet
+ARP request is for me, responded
+Received ARP reply
+=============================================
+Received packet on interface 2
+Received ARP packet
+Received ARP reply
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.0.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 1
+Received IPv4 packet
+Destination IP: 192.168.0.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.2.2
+TTL: 63 -> 62
+Next hop: 192.168.2.2
+Source MAC: de:fe:c8:ed:01:02
+Destination MAC: de:ad:be:ef:00:02
+Sent packet on interface 1
+=============================================
+Received packet on interface 1
+Received IPv4 packet
+Destination IP: 192.168.1.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.2.2
+TTL: 63 -> 62
+Next hop: 192.168.2.2
+Source MAC: de:fe:c8:ed:01:02
+Destination MAC: de:ad:be:ef:00:02
+Sent packet on interface 1
+=============================================
+Received packet on interface 1
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 64 -> 63
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.2.2
+TTL: 64 -> 63
+Next hop: 192.168.2.2
+Source MAC: de:fe:c8:ed:01:02
+Destination MAC: de:ad:be:ef:00:02
+Sent packet on interface 1
+=============================================
+Received packet on interface 2
+Received ARP packet
+ARP request is for me, responded
+Received ARP reply
+=============================================
+Received packet on interface 2
+Received ARP packet
+Received ARP reply
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.1.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 63 -> 62
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 63 -> 62
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.0.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 63 -> 62
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.0.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 63 -> 62
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.0.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 63 -> 62
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.0.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 63 -> 62
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.0.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 63 -> 62
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.0.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 63 -> 62
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.0.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 63 -> 62
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.0.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 63 -> 62
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.0.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 0
+Received IPv4 packet
+Destination IP: 192.168.3.2
+TTL: 63 -> 62
+Next hop: 192.168.3.2
+Source MAC: de:fe:c8:ed:01:03
+Destination MAC: de:ad:be:ef:00:03
+Sent packet on interface 2
+=============================================
+Received packet on interface 2
+Received IPv4 packet
+Destination IP: 192.168.0.2
+TTL: 64 -> 63
+Next hop: 192.0.1.1
+Source MAC: ca:fe:ba:be:01:00
+Destination MAC: ca:fe:ba:be:00:01
+Sent packet on interface 0
+=============================================
+Received packet on interface 2
+Received ARP packet
+ARP request is for me, responded
+Received ARP reply
+=============================================
+Received packet on interface 2
+Received ARP packet
+Received ARP reply

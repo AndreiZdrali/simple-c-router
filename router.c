@@ -73,9 +73,9 @@ struct route_table_entry *get_best_route(uint32_t dest_ip)
 	{
 		if ((dest_ip & route_table[i].mask) == route_table[i].prefix)
 		{
-			if (route_table[i].mask > max_mask)
+			if (ntohl(route_table[i].mask) > max_mask)
 			{
-				max_mask = route_table[i].mask;
+				max_mask = ntohl(route_table[i].mask);
 				best_route = &route_table[i];
 			}
 		}
@@ -141,25 +141,34 @@ void send_icmp_ttl_exceeded(int interface, char* buf, size_t len)
 {
 	struct ether_header *eth_hdr = (struct ether_header *)buf;
 	struct iphdr *ip_hdr = (struct iphdr *)(buf + sizeof(struct ether_header));
+	struct icmphdr *icmp_hdr = (struct icmphdr *)(buf + sizeof(struct ether_header) + sizeof(struct iphdr));
 
 	// se schimba doar tipul, codul ramane 0
-	struct icmphdr *icmp_hdr = (struct icmphdr *)(buf + sizeof(struct ether_header) + ip_hdr->ihl * 4);
 	icmp_hdr->type = ICMP_TIME_EXCEEDED;
 
 	icmp_hdr->checksum = 0;
-	icmp_hdr->checksum = htons(checksum((uint16_t *)icmp_hdr, len - sizeof(struct ether_header) - ip_hdr->ihl * 4));
+	icmp_hdr->checksum = htons(checksum((uint16_t *)icmp_hdr, sizeof(struct icmphdr)));
 
-	uint32_t temp = ip_hdr->saddr;
+	// se adauga header-ul IP si primele 8 bytes din pachet
+	memcpy(buf + sizeof(struct ether_header) + sizeof(struct iphdr) + sizeof(struct icmphdr), ip_hdr, sizeof(struct iphdr) + 8);
+
+	uint32_t my_ip;
+	inet_pton(AF_INET, get_interface_ip(interface), &my_ip);
 	ip_hdr->saddr = ip_hdr->daddr;
-	ip_hdr->daddr = temp;
+	ip_hdr->daddr = my_ip;
+
+	ip_hdr->ttl = 64;
+	ip_hdr->protocol = IPPROTO_ICMP;
+	ip_hdr->tot_len = htons(sizeof(struct iphdr) + sizeof(struct icmphdr));
 
 	ip_hdr->check = 0;
-	ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, ip_hdr->ihl * 4));
+	ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, sizeof(struct iphdr)));
 
 	// swap la mac-uri
 	memcpy(eth_hdr->ether_dhost, eth_hdr->ether_shost, 6);
 	get_interface_mac(interface, eth_hdr->ether_shost);
 
+	len = sizeof(struct ether_header) + sizeof(struct iphdr) + sizeof(struct icmphdr);
 	send_to_link(interface, buf, len);
 
 	debug_printf("Sent ICMP TTL Exceeded\n");
@@ -170,17 +179,21 @@ void send_icmp_dest_unreachable(int interface, char* buf, size_t len)
 {
 	struct ether_header *eth_hdr = (struct ether_header *)buf;
 	struct iphdr *ip_hdr = (struct iphdr *)(buf + sizeof(struct ether_header));
+	struct icmphdr *icmp_hdr = (struct icmphdr *)(buf + sizeof(struct ether_header) + sizeof(struct iphdr));
 
 	// se schimba doar tipul, codul ramane 0
-	struct icmphdr *icmp_hdr = (struct icmphdr *)(buf + sizeof(struct ether_header) + ip_hdr->ihl * 4);
 	icmp_hdr->type = ICMP_DEST_UNREACH;
 
 	icmp_hdr->checksum = 0;
-	icmp_hdr->checksum = htons(checksum((uint16_t *)icmp_hdr, len - sizeof(struct ether_header) - ip_hdr->ihl * 4));
+	icmp_hdr->checksum = htons(checksum((uint16_t *)icmp_hdr, len - sizeof(struct ether_header) - sizeof(struct iphdr)));
 
 	uint32_t temp = ip_hdr->saddr;
 	ip_hdr->saddr = ip_hdr->daddr;
 	ip_hdr->daddr = temp;
+
+	ip_hdr->ttl = 64;
+	ip_hdr->protocol = IPPROTO_ICMP;
+	ip_hdr->tot_len = htons(sizeof(struct iphdr) + sizeof(struct icmphdr) + 8);
 
 	ip_hdr->check = 0;
 	ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, ip_hdr->ihl * 4));
@@ -189,6 +202,7 @@ void send_icmp_dest_unreachable(int interface, char* buf, size_t len)
 	memcpy(eth_hdr->ether_dhost, eth_hdr->ether_shost, 6);
 	get_interface_mac(interface, eth_hdr->ether_shost);
 
+	len = sizeof(struct ether_header) + sizeof(struct iphdr) + sizeof(struct icmphdr) + sizeof(*ip_hdr) + 8;
 	send_to_link(interface, buf, len);
 
 	debug_printf("Sent ICMP Destination Unreachable\n");
@@ -211,6 +225,7 @@ void handle_ipv4(int interface, char* buf, size_t len)
 
 	if (ip_hdr->daddr == my_ip)
 	{
+		debug_printf("Packet is for me\n");
 		handle_icmp_request(interface, buf, len);
 		return;
 	}
@@ -233,7 +248,7 @@ void handle_ipv4(int interface, char* buf, size_t len)
 	ip_hdr->ttl--;
 
 	// caut in tabela de rutare
-	struct route_table_entry *best_route = get_best_route(ntohl(ip_hdr->daddr));
+	struct route_table_entry *best_route = get_best_route(ip_hdr->daddr);
 
 	// daca nu gasesc ruta
 	if (best_route == NULL)
@@ -243,7 +258,7 @@ void handle_ipv4(int interface, char* buf, size_t len)
 		return;
 	}
 
-	int next_hop_network = htonl(best_route->next_hop);
+	int next_hop_network = best_route->next_hop;
 	debug_printf("Next hop: ");
 	print_ip(next_hop_network);
 
@@ -389,12 +404,12 @@ int main(int argc, char *argv[])
 	rtable_size = read_rtable(argv[1], route_table);
 
 	// conversie din network order in host order
-	for (int i = 0; i < rtable_size; i++)
-	{
-		route_table[i].prefix = ntohl(route_table[i].prefix);
-		route_table[i].next_hop = ntohl(route_table[i].next_hop);
-		route_table[i].mask = ntohl(route_table[i].mask);
-	}
+	// for (int i = 0; i < rtable_size; i++)
+	// {
+	// 	route_table[i].prefix = ntohl(route_table[i].prefix);
+	// 	route_table[i].next_hop = ntohl(route_table[i].next_hop);
+	// 	route_table[i].mask = ntohl(route_table[i].mask);
+	// }
 
 	// citim tabela statica ARP
 	arp_table = malloc(MAX_ARP_SIZE * sizeof(struct arp_table_entry));

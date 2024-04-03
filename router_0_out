@@ -104,15 +104,6 @@ Source MAC: de:fe:c8:ed:00:00
 Destination MAC: de:ad:be:ef:00:00
 Sent packet on interface 1
 =============================================
-Received packet on interface 2
-Received ARP packet
-ARP request is for me, responded
-Received ARP reply
-=============================================
-Received packet on interface 2
-Received ARP packet
-Received ARP reply
-=============================================
 Received packet on interface 1
 Received IPv4 packet
 Destination IP: 192.168.1.2
@@ -229,9 +220,8 @@ Sent packet on interface 0
 Received packet on interface 1
 Received IPv4 packet
 Destination IP: 192.168.0.1
+Packet is for me
 Received ICMP Echo Request
-icmp_hdr->type: 0
-icmp_hdr->code: 0
 Sent ICMP Echo Reply
 =============================================
 Received packet on interface 1
@@ -239,12 +229,14 @@ Received IPv4 packet
 Destination IP: 192.168.0.2
 TTL: 1 -> 0
 TTL exceeded
+Sent ICMP TTL Exceeded
 =============================================
 Received packet on interface 1
 Received IPv4 packet
 Destination IP: 10.0.0.1
 TTL: 64 -> 63
 No route found
+Sent ICMP Destination Unreachable
 =============================================
 Received packet on interface 1
 Received IPv4 packet

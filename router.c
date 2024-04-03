@@ -11,6 +11,11 @@
 #define MAX_RTABLE_SIZE 80000
 #define MAX_ARP_SIZE 1000
 
+#define ICMP_ECHO_REQUEST 0x08
+#define ICMP_ECHO_REPLY 0x00
+#define ICMP_TIME_EXCEEDED 0x0b
+#define ICMP_DEST_UNREACH 0x03
+
 #define ARP_REQUEST 0x01
 #define ARP_REPLY 0x02
 
@@ -88,7 +93,108 @@ struct arp_table_entry *get_arp_entry(uint32_t ip)
 	return NULL;
 }
 
-void handle_ipv4(int interface, char *buf, size_t len)
+void handle_icmp_request(int interface, char* buf, size_t len)
+{
+	struct ether_header *eth_hdr = (struct ether_header *)buf;
+	struct iphdr *ip_hdr = (struct iphdr *)(buf + sizeof(struct ether_header));
+
+	if (ip_hdr->protocol != IPPROTO_ICMP)
+	{
+		debug_printf("Packet is for me, but not an ICMP packet\n");
+		return;
+	}
+
+	struct icmphdr *icmp_hdr = (struct icmphdr *)(buf + sizeof(struct ether_header) + ip_hdr->ihl * 4);
+
+	if (icmp_hdr->type == ICMP_ECHO_REQUEST)
+	{
+		debug_printf("Received ICMP Echo Request\n");
+
+		// tipul se schimba, codul ramane tot 0, deci nu-l modific
+		icmp_hdr->type = ICMP_ECHO_REPLY;
+
+		icmp_hdr->checksum = 0;
+		icmp_hdr->checksum = htons(checksum((uint16_t *)icmp_hdr, len - sizeof(struct ether_header) - ip_hdr->ihl * 4));
+
+		uint32_t temp = ip_hdr->saddr;
+		ip_hdr->saddr = ip_hdr->daddr;
+		ip_hdr->daddr = temp;
+
+		ip_hdr->check = 0;
+		ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, ip_hdr->ihl * 4));
+
+		// swap la mac-uri
+		memcpy(eth_hdr->ether_dhost, eth_hdr->ether_shost, 6);
+		get_interface_mac(interface, eth_hdr->ether_shost);
+
+		send_to_link(interface, buf, len);
+
+		debug_printf("Sent ICMP Echo Reply\n");
+	}
+	else {
+		debug_printf("Not an ICMP Echo Request, cum s-a ajuns aici???\n");
+	}
+}
+
+// TODO: sa fac asta conform cerintei
+void send_icmp_ttl_exceeded(int interface, char* buf, size_t len)
+{
+	struct ether_header *eth_hdr = (struct ether_header *)buf;
+	struct iphdr *ip_hdr = (struct iphdr *)(buf + sizeof(struct ether_header));
+
+	// se schimba doar tipul, codul ramane 0
+	struct icmphdr *icmp_hdr = (struct icmphdr *)(buf + sizeof(struct ether_header) + ip_hdr->ihl * 4);
+	icmp_hdr->type = ICMP_TIME_EXCEEDED;
+
+	icmp_hdr->checksum = 0;
+	icmp_hdr->checksum = htons(checksum((uint16_t *)icmp_hdr, len - sizeof(struct ether_header) - ip_hdr->ihl * 4));
+
+	uint32_t temp = ip_hdr->saddr;
+	ip_hdr->saddr = ip_hdr->daddr;
+	ip_hdr->daddr = temp;
+
+	ip_hdr->check = 0;
+	ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, ip_hdr->ihl * 4));
+
+	// swap la mac-uri
+	memcpy(eth_hdr->ether_dhost, eth_hdr->ether_shost, 6);
+	get_interface_mac(interface, eth_hdr->ether_shost);
+
+	send_to_link(interface, buf, len);
+
+	debug_printf("Sent ICMP TTL Exceeded\n");
+}
+
+// TODO: sa fac asta conform cerintei
+void send_icmp_dest_unreachable(int interface, char* buf, size_t len)
+{
+	struct ether_header *eth_hdr = (struct ether_header *)buf;
+	struct iphdr *ip_hdr = (struct iphdr *)(buf + sizeof(struct ether_header));
+
+	// se schimba doar tipul, codul ramane 0
+	struct icmphdr *icmp_hdr = (struct icmphdr *)(buf + sizeof(struct ether_header) + ip_hdr->ihl * 4);
+	icmp_hdr->type = ICMP_DEST_UNREACH;
+
+	icmp_hdr->checksum = 0;
+	icmp_hdr->checksum = htons(checksum((uint16_t *)icmp_hdr, len - sizeof(struct ether_header) - ip_hdr->ihl * 4));
+
+	uint32_t temp = ip_hdr->saddr;
+	ip_hdr->saddr = ip_hdr->daddr;
+	ip_hdr->daddr = temp;
+
+	ip_hdr->check = 0;
+	ip_hdr->check = htons(checksum((uint16_t *)ip_hdr, ip_hdr->ihl * 4));
+
+	// swap la mac-uri
+	memcpy(eth_hdr->ether_dhost, eth_hdr->ether_shost, 6);
+	get_interface_mac(interface, eth_hdr->ether_shost);
+
+	send_to_link(interface, buf, len);
+
+	debug_printf("Sent ICMP Destination Unreachable\n");
+}
+
+void handle_ipv4(int interface, char* buf, size_t len)
 {
 	debug_printf("Received IPv4 packet\n");
 
@@ -105,7 +211,8 @@ void handle_ipv4(int interface, char *buf, size_t len)
 
 	if (ip_hdr->daddr == my_ip)
 	{
-		// TODO: vf daca e ICMP, altfel drop
+		handle_icmp_request(interface, buf, len);
+		return;
 	}
 
 	uint16_t check = ntohs(ip_hdr->check);
@@ -119,8 +226,8 @@ void handle_ipv4(int interface, char *buf, size_t len)
 	debug_printf("TTL: %d -> %d\n", ip_hdr->ttl, ip_hdr->ttl - 1);
 	if (ip_hdr->ttl <= 1)
 	{
-		// TODO: trimit ICMP TTL Exceeded
 		debug_printf("TTL exceeded\n");
+		send_icmp_ttl_exceeded(interface, buf, len);
 		return;
 	}
 	ip_hdr->ttl--;
@@ -131,8 +238,8 @@ void handle_ipv4(int interface, char *buf, size_t len)
 	// daca nu gasesc ruta
 	if (best_route == NULL)
 	{
-		// TODO: trimit ICMP Destination Unreachable
 		debug_printf("No route found\n");
+		send_icmp_dest_unreachable(interface, buf, len);
 		return;
 	}
 
@@ -205,8 +312,6 @@ void handle_ipv4(int interface, char *buf, size_t len)
 	memcpy(eth_hdr->ether_dhost, arp_entry->mac, 6);
 
 	debug_printf("Destination MAC: %02x:%02x:%02x:%02x:%02x:%02x\n", eth_hdr->ether_dhost[0], eth_hdr->ether_dhost[1], eth_hdr->ether_dhost[2], eth_hdr->ether_dhost[3], eth_hdr->ether_dhost[4], eth_hdr->ether_dhost[5]);
-
-	// TODO: sa calculez lungimea?
 
 	// trimit pachetul
 	send_to_link(best_route->interface, buf, len);

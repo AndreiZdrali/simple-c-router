@@ -1,1 +1,3 @@
-Repository for the first homework of the Communication Networks class. In this homework the students will implement the dataplane of a router.
+### Router Dataplane Implementation
+
+This project focuses on building the dataplane of a router, responsible for handling key network operations. The router forwards packets based on routing tables, ensuring efficient delivery across the network. It also responds to basic ICMP messages and uses ARP to map IP addresses to MAC addresses.
